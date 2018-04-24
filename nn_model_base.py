@@ -14,7 +14,7 @@ class NNModelBase(object):
             embed_dim=10,
             hidden_dim=20,
             eta=0.01,
-            max_iter=100,
+            max_iter=10,
             tol=1e-6,
             display_progress=True):
         self.vocab = dict(zip(vocab, range(len(vocab))))

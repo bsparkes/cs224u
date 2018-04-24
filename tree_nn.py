@@ -11,7 +11,7 @@ __version__ = "CS224u, Stanford, Spring 2018"
 class TreeNN(NNModelBase):
     def __init__(self, vocab, **kwargs):
         super(TreeNN, self).__init__(vocab, **kwargs)
-        self.hidden_dim = self.embed_dim * 2
+        self.hidden_dim = self.embed_dim #* 2
 
     def initialize_parameters(self):
         # Hidden parameters for semantic composition:
@@ -20,6 +20,7 @@ class TreeNN(NNModelBase):
         # Output classifier:
         self.W_hy = self.weight_init(self.embed_dim, self.output_dim)
         self.b_y = np.zeros(self.output_dim)
+        self.test = 'test'
 
     def forward_propagation(self, subtree):
         """Forward propagation through the tree and through the
@@ -83,7 +84,14 @@ class TreeNN(NNModelBase):
             left_rep = self._get_vector_tree_root(left_vectree)
             right_rep = self._get_vector_tree_root(right_vectree)
             # Concatenate and create the hidden representation:
-            combined = np.concatenate((left_rep, right_rep))
+            # Here we've defined W so that hidden dimensions are twice the length of the embedding dimensions.
+            # This means that we can concatenate two vectors together, and these will be the right length.
+            # combined = np.concatenate((left_rep, right_rep))
+            # print(left_vectree)
+            # print(left_rep)
+            # print('test')
+            combined = (left_rep + right_rep)/2
+            # print(combined)
             root_rep = np.tanh(combined.dot(self.W) + self.b)
             # Return the full subtree of vectors:
             return (root_rep, left_vectree, right_vectree)
@@ -103,6 +111,7 @@ class TreeNN(NNModelBase):
 
         """
         if isinstance(vectree, tuple):
+            vectree[0]
             return vectree[0]
         else:
             return vectree
@@ -133,14 +142,15 @@ class TreeNN(NNModelBase):
             left_rep = self._get_vector_tree_root(left_subtree)
             right_rep = self._get_vector_tree_root(right_subtree)
             # Combine them and update d_W:
-            combined = np.concatenate((left_rep, right_rep))
+            # combined = np.concatenate((left_rep, right_rep))
+            combined = (left_rep + right_rep)/2
             d_W += np.outer(combined, h_err)
             # Get the gradients for both child nodes:
             h_err = h_err.dot(self.W.T) * d_tanh(combined)
             # Split the gradients between the children and continue
             # backpropagation down each subtree:
-            l_err = h_err[: self.embed_dim]
-            r_err = h_err[self.embed_dim: ]
+            l_err = h_err[ : self.embed_dim]
+            r_err = h_err[ : self.embed_dim]
             d_W, d_b = self._tree_backprop(left_subtree, l_err, d_W, d_b)
             d_W, d_b = self._tree_backprop(right_subtree, r_err, d_W, d_b)
         return d_W, d_b
